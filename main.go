@@ -2,10 +2,12 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io"
 	"log"
 	"os"
+	"rymcli/localizations"
 	"strings"
 
 	"charm.land/bubbles/v2/key"
@@ -28,7 +30,7 @@ type Album struct {
 
 var songs []Song
 
-const listHeight = 14
+const listHeight = 20
 
 type styles struct {
 	title        lipgloss.Style
@@ -40,24 +42,79 @@ type styles struct {
 }
 
 type listKeyMap struct {
-	rateUp   key.Binding
-	rateDown key.Binding
-	export   key.Binding
+	cursorUp    key.Binding
+	cursorDown  key.Binding
+	nextPage    key.Binding
+	prevPage    key.Binding
+	goStart     key.Binding
+	goEnd       key.Binding
+	quit        key.Binding
+	help        key.Binding
+	closeHelp   key.Binding
+	filter      key.Binding
+	clearFilter key.Binding
+	rateUp      key.Binding
+	rateDown    key.Binding
+	export      key.Binding
 }
 
-func newItemKeyMap() listKeyMap {
+func newItemKeyMap(l *localizations.Localizer) listKeyMap {
 	return listKeyMap{
+		cursorUp: key.NewBinding(
+			key.WithKeys("up", "j"),
+			key.WithHelp("↑/j", l.Get("messages.cursor_up")),
+		),
+		cursorDown: key.NewBinding(
+			key.WithKeys("down", "k"),
+			key.WithHelp("↓/k", l.Get("messages.cursor_down")),
+		),
+		nextPage: key.NewBinding(
+			key.WithKeys("l", "pgdn"),
+			key.WithHelp("l/pgdn", l.Get("messages.next_page")),
+		),
+		prevPage: key.NewBinding(
+			key.WithKeys("h", "pgup"),
+			key.WithHelp("h/pgup", l.Get("messages.prev_page")),
+		),
+		goStart: key.NewBinding(
+			key.WithKeys("g", "home"),
+			key.WithHelp("g/home", l.Get("messages.go_to_start")),
+		),
+		goEnd: key.NewBinding(
+			key.WithKeys("G", "end"),
+			key.WithHelp("G/end", l.Get("messages.go_to_end")),
+		),
+		quit: key.NewBinding(
+			key.WithKeys("q", "esc"),
+			key.WithHelp("q/esc", l.Get("messages.quit")),
+		),
+		help: key.NewBinding(
+			key.WithKeys("?"),
+			key.WithHelp("?", l.Get("messages.show_help")),
+		),
+		closeHelp: key.NewBinding(
+			key.WithKeys("?"),
+			key.WithHelp("?", l.Get("messages.close_help")),
+		),
+		filter: key.NewBinding(
+			key.WithKeys("/"),
+			key.WithHelp("/", l.Get("messages.filter")),
+		),
+		clearFilter: key.NewBinding(
+			key.WithKeys("esc"),
+			key.WithHelp("esc", l.Get("messages.clear_filter")),
+		),
 		rateUp: key.NewBinding(
 			key.WithKeys("right"),
-			key.WithHelp("→", "rate up"),
+			key.WithHelp("→", l.Get("messages.rate_up")),
 		),
 		rateDown: key.NewBinding(
 			key.WithKeys("left"),
-			key.WithHelp("←", "rate down"),
+			key.WithHelp("←", l.Get("messages.rate_down")),
 		),
 		export: key.NewBinding(
 			key.WithKeys("enter"),
-			key.WithHelp("enter", "export ratings as JSON"),
+			key.WithHelp("enter", l.Get("messages.save_ratings")),
 		),
 	}
 }
@@ -105,19 +162,24 @@ func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list
 }
 
 type model struct {
-	list     list.Model
-	filename string
-	album    Album
-	choice   string
-	styles   styles
-	quitting bool
+	list      list.Model
+	filename  string
+	album     Album
+	choice    string
+	styles    styles
+	quitting  bool
+	localizer *localizations.Localizer
+	lang      string
 }
 
-func initialModel(data []byte, filename string) model {
+func initialModel(data []byte, filename string, lang string) model {
 	album := Album{}
 	if err := json.Unmarshal(data, &album); err != nil {
 		log.Fatalf("Error parsing JSON: %v", err)
 	}
+
+	localizer := localizations.New("en", "ru")
+	localizer.Locale = lang
 
 	items := []list.Item{}
 	for i := range album.Songs {
@@ -127,7 +189,19 @@ func initialModel(data []byte, filename string) model {
 	const defaultWidth = 20
 	l := list.New(items, itemDelegate{}, defaultWidth, listHeight)
 
-	customKeys := newItemKeyMap()
+	customKeys := newItemKeyMap(localizer)
+
+	l.KeyMap.CursorUp = customKeys.cursorUp
+	l.KeyMap.CursorDown = customKeys.cursorDown
+	l.KeyMap.ShowFullHelp = customKeys.help
+	l.KeyMap.CloseFullHelp = customKeys.closeHelp
+	l.KeyMap.Filter = customKeys.filter
+	l.KeyMap.ClearFilter = customKeys.clearFilter
+	l.KeyMap.GoToStart = customKeys.goStart
+	l.KeyMap.GoToEnd = customKeys.goEnd
+	l.KeyMap.NextPage = customKeys.nextPage
+	l.KeyMap.PrevPage = customKeys.prevPage
+	l.KeyMap.Quit = customKeys.quit
 
 	l.AdditionalFullHelpKeys = func() []key.Binding {
 		return []key.Binding{customKeys.rateUp, customKeys.rateDown, customKeys.export}
@@ -139,11 +213,11 @@ func initialModel(data []byte, filename string) model {
 
 	authors := strings.Join(album.Authors, ", ")
 
-	l.Title = fmt.Sprintf("Rating '%s' by %s", album.Title, authors)
+	l.Title = localizer.Get("messages.rating_album_by", &localizations.Replacements{"title": album.Title, "authors": authors})
 	l.SetShowStatusBar(false)
 	l.SetFilteringEnabled(false)
 
-	m := model{list: l, album: album, filename: filename}
+	m := model{list: l, album: album, filename: filename, localizer: localizer, lang: lang}
 	m.updateStyles(true) // default to dark styles.
 	return m
 }
@@ -174,7 +248,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "enter":
 			err := m.saveRatings()
 			if err == nil {
-				return m, m.list.NewStatusMessage("Successfully saved ratings!")
+				return m, m.list.NewStatusMessage(m.localizer.Get("messages.saved_ratings"))
 			}
 			return m, nil
 		case "right":
@@ -225,10 +299,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() tea.View {
-	if m.quitting {
-		return tea.NewView(m.styles.quitText.Render("Bye"))
-	}
-
 	listView := m.list.View()
 
 	footerStyle := lipgloss.NewStyle().
@@ -238,10 +308,12 @@ func (m model) View() tea.View {
 		MarginTop(1).
 		Bold(true)
 
-	overallRating := fmt.Sprintf("\t\t\tOVERALL ALBUM RATING: %.2f / 5.00 ", m.album.Rating)
+	overallRating := m.localizer.Get("messages.overall_rating", &localizations.Replacements{"rating": fmt.Sprintf("%.2f", m.album.Rating)})
 	footer := footerStyle.Render(overallRating)
 
-	return tea.NewView(lipgloss.JoinVertical(lipgloss.Left, listView, footer))
+	v := tea.NewView(lipgloss.JoinVertical(lipgloss.Left, listView, footer))
+	v.AltScreen = true
+	return v
 }
 
 func (m model) saveRatings() error {
@@ -254,13 +326,22 @@ func (m model) saveRatings() error {
 }
 
 func main() {
-	filename := "wlr.json"
-	data, err := os.ReadFile(filename)
+	lang := flag.String("lang", "en", "The localization language.")
+	filename := flag.String("json", "", "Path to the JSON file.")
+
+	flag.Parse()
+
+	if *filename == "" {
+		fmt.Println("You must provide a JSON file!")
+		return
+	}
+
+	data, err := os.ReadFile(*filename)
 	if err != nil {
 		fmt.Println("Error reading file:", err)
 		os.Exit(1)
 	}
-	if _, err := tea.NewProgram(initialModel(data, filename)).Run(); err != nil {
+	if _, err := tea.NewProgram(initialModel(data, *filename, *lang)).Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}
