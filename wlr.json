@@ -1,16 +1,104 @@
 {
-    "title": "Some Album Title",
+    "title": "Whole Lotta Red",
     "authors": [
-        "An Artist", "Some Other Artist"
+        "Playboi Carti"
     ],
-    "rating": 0,
+    "rating": 0.20833333,
     "songs": [
         {
-            "title": "Track",
+            "title": "Rockstar Made",
+            "rating": 5
+        },
+        {
+            "title": "Go2DaMoon (feat. Kanye West)",
             "rating": 0
         },
         {
-            "title": "Another track",
+            "title": "Stop Breathing",
+            "rating": 0
+        },
+        {
+            "title": "Beno!",
+            "rating": 0
+        },
+        {
+            "title": "JumpOutTheHouse",
+            "rating": 0
+        },
+        {
+            "title": "M3tamorphosis (feat. Kid Cudi)",
+            "rating": 0
+        },
+        {
+            "title": "Slay3r",
+            "rating": 0
+        },
+        {
+            "title": "No Sl33p",
+            "rating": 0
+        },
+        {
+            "title": "New Tank",
+            "rating": 0
+        },
+        {
+            "title": "Teen X (feat. Future)",
+            "rating": 0
+        },
+        {
+            "title": "Meh",
+            "rating": 0
+        },
+        {
+            "title": "Vamp Anthem",
+            "rating": 0
+        },
+        {
+            "title": "New N3on",
+            "rating": 0
+        },
+        {
+            "title": "Control",
+            "rating": 0
+        },
+        {
+            "title": "Punk Monk",
+            "rating": 0
+        },
+        {
+            "title": "On That Time",
+            "rating": 0
+        },
+        {
+            "title": "King Vamp",
+            "rating": 0
+        },
+        {
+            "title": "Place",
+            "rating": 0
+        },
+        {
+            "title": "Sky",
+            "rating": 0
+        },
+        {
+            "title": "Over",
+            "rating": 0
+        },
+        {
+            "title": "ILoveUIHateU",
+            "rating": 0
+        },
+        {
+            "title": "Die4Guy",
+            "rating": 0
+        },
+        {
+            "title": "Not Playing",
+            "rating": 0
+        },
+        {
+            "title": "F33l Lik3 Dyin",
             "rating": 0
         }
     ]

@@ -6,9 +6,11 @@
 `https://github.com/Blixza/CLI-Music-Rating/releases/tag/v1.0.0`
 
 ## Example JSON file
-**Make sure your JSON is formatted exactly like this**
-
-**Also you're NOT meant to edit the JSON file by yourself!**
+> [!IMPORTANT]
+> Make sure your JSON is formatted exactly like the example below.
+> 
+> [!CAUTION]
+> Do not edit the JSON file manually! Use the app to make changes to avoid corruption.
 
 ```json
 {
