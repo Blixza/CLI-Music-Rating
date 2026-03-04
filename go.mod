@@ -6,8 +6,6 @@ require (
 	charm.land/bubbles/v2 v2.0.0
 	charm.land/bubbletea/v2 v2.0.1
 	charm.land/lipgloss/v2 v2.0.0
-	github.com/dolmen-go/kittyimg v0.0.0-20250610224728-874967bd8ea4
-	golang.org/x/image v0.36.0
 )
 
 require (

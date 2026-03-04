@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"image"
 	"io"
 	"log"
 	"os"
@@ -13,8 +12,6 @@ import (
 	"charm.land/bubbles/v2/list"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
-	"github.com/dolmen-go/kittyimg"
-	"golang.org/x/image/draw"
 )
 
 type Song struct {
@@ -241,7 +238,7 @@ func (m model) View() tea.View {
 		MarginTop(1).
 		Bold(true)
 
-	overallRating := fmt.Sprintf(" OVERALL ALBUM RATING: %.2f / 5.00 ", m.album.Rating)
+	overallRating := fmt.Sprintf("\t\t\tOVERALL ALBUM RATING: %.2f / 5.00 ", m.album.Rating)
 	footer := footerStyle.Render(overallRating)
 
 	return tea.NewView(lipgloss.JoinVertical(lipgloss.Left, listView, footer))
@@ -267,19 +264,4 @@ func main() {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}
-}
-
-func printImageKitty() {
-	file, _ := os.Open("wlr.jpg")
-	defer file.Close()
-	src, _, _ := image.Decode(file)
-
-	width := 300
-	height := (src.Bounds().Dy() * width) / src.Bounds().Dx()
-
-	dst := image.NewRGBA(image.Rect(0, 0, width, height))
-
-	draw.BiLinear.Scale(dst, dst.Bounds(), src, src.Bounds(), draw.Over, nil)
-
-	kittyimg.Fprintln(os.Stdout, dst)
 }
