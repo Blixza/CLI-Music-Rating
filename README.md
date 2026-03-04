@@ -8,7 +8,7 @@
 ## Example JSON file
 > [!IMPORTANT]
 > Make sure your JSON is formatted exactly like the example below.
-> 
+
 > [!CAUTION]
 > Do not edit the JSON file manually! Use the app to make changes to avoid corruption.
 
